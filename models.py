@@ -1,3 +1,5 @@
+import pyotp
+
 from app import db, app
 from flask_login import UserMixin
 
@@ -10,6 +12,7 @@ class User(db.Model, UserMixin):
     # User authentication information.
     email = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String(100), nullable=False)
+    pin_key = db.Column(db.String(32), nullable=False, default=pyotp.random_base32())
 
     # User information
     firstname = db.Column(db.String(100), nullable=False)
@@ -27,6 +30,9 @@ class User(db.Model, UserMixin):
         self.phone = phone
         self.password = password
         self.role = role
+
+    def get_2fa_uri(self):
+        return str(pyotp.totp.TOTP(self.pin_key).provisioning_uri(name=self.email, issuer_name='CSC2031 Lottery App'))
 
 
 class Draw(db.Model):

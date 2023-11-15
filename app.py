@@ -1,5 +1,6 @@
 # IMPORTS
 from flask import Flask, render_template
+from flask_qrcode import QRcode
 from flask_sqlalchemy import SQLAlchemy
 
 # CONFIG
@@ -11,6 +12,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # initialise database
 db = SQLAlchemy(app)
+qrcode = QRcode(app)
 
 
 # HOME PAGE VIEW
