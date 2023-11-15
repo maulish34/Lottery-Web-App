@@ -1,7 +1,9 @@
 import re
+from datetime import datetime
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField
+
 from wtforms.validators import DataRequired, Email, ValidationError, Length, EqualTo
 
 
@@ -31,6 +33,18 @@ def validate_password(form, field):
         )
     print("apss check")
 
+def validate_dates(form, field):
+    p = re.compile(r"^([012][0-9]|3[01])/(0[1-9]|1[0-2])/(19|20)[0-9]{2}$")
+    if not p.match(field.data):
+        raise ValidationError("Date must be of the format: DD/MM/YYYY")
+
+
+def validate_postcode(form, field):
+    p = re.compile(r"^([A-Z][0-9]) ([0-9][A-Z]{2})|([A-Z][0-9]{2}) ([0-9][A-Z]{2})|([A-Z]{2}[0-9]) ([0-9][A-Z]{2})$")
+    if not p.match(field.data):
+        raise ValidationError("The postcode must be in one of the following formats: XY YXX or XYY YXX or XXY YXX,"
+                              " where X is any uppercase letter and Y is any digit")
+
 
 
 class RegisterForm(FlaskForm):
@@ -39,7 +53,9 @@ class RegisterForm(FlaskForm):
     )
     firstname = StringField(validators=[DataRequired(message="Please fill in this field."), character_check,])
     lastname = StringField(validators=[DataRequired(message="Please fill in this field."), character_check,])
+    birthdate = StringField(validators=[DataRequired(message="Please fill in this field."), validate_dates])
     phone = StringField(validators=[DataRequired(message="Please fill in this field."), phone_check,])
+    postcode = StringField(validators=[DataRequired(message="Please fill in this field."), validate_postcode])
     password = PasswordField(
         validators=[
             DataRequired(message="Please fill in this field."),
