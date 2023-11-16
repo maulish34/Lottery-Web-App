@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, RecaptchaField
 from wtforms import StringField, SubmitField, PasswordField
 
 from wtforms.validators import DataRequired, Email, ValidationError, Length, EqualTo
@@ -86,7 +86,6 @@ class RegisterForm(FlaskForm):
         validators=[
             DataRequired(message="Please fill in this field."),
             Length(min=6, max=12),
-            character_check,
             validate_password,
         ]
     )
@@ -97,3 +96,13 @@ class RegisterForm(FlaskForm):
         ]
     )
     submit = SubmitField()
+
+
+class LoginForm(FlaskForm):
+    email = StringField(validators=[DataRequired(), Email()])
+    password = PasswordField(validators=[DataRequired()])
+    pin = StringField(validators=[DataRequired()])
+    postcode = StringField(validators=[DataRequired()])
+    recaptcha = RecaptchaField()
+    submit = SubmitField()
+

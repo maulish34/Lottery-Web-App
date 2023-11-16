@@ -38,6 +38,15 @@ class User(db.Model, UserMixin):
     def get_2fa_uri(self):
         return str(pyotp.totp.TOTP(self.pin_key).provisioning_uri(name=self.email, issuer_name='CSC2031 Lottery App'))
 
+    def verify_password(self, password):
+        return self.password == password
+
+    def verify_pin(self, pin):
+        return pyotp.TOTP(self.pin_key).verify(pin)
+
+    def verify_postcode(self, postcode):
+        return self.postcode == postcode
+
 
 class Draw(db.Model):
     __tablename__ = 'draws'

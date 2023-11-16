@@ -1,8 +1,10 @@
 # IMPORTS
 from flask import Blueprint, render_template, flash, redirect, url_for, session
-from app import db
+from markupsafe import Markup
+from flask_login import login_user, logout_user, current_user, login_required, login_manager
+from app import db, required_roles
 from models import User
-from users.forms import RegisterForm
+from users.forms import RegisterForm, LoginForm
 
 # CONFIG
 users_blueprint = Blueprint('users', __name__, template_folder='templates')
@@ -47,13 +49,50 @@ def register():
 
 
 # view user login
-@users_blueprint.route('/login')
+@users_blueprint.route('/login', methods=['GET', 'POST'])
 def login():
-    return render_template('users/login.html')
+    if current_user.is_anonymous:
+        if not session.get('authentication_attempts'):
+            session['authentication_attempts'] = 0
+        print("attempts: " + str(session.get('authentication_attempts')))
+
+        form = LoginForm()
+        print("form displayed")
+        if form.validate_on_submit():
+            print("entered validate")
+            user = User.query.filter_by(email=form.email.data).first()
+            print(user.email)
+            if not user or not user.verify_password(form.password.data) or not user.verify_pin(form.pin.data) \
+                    or not user.verify_postcode(form.postcode.data):
+                print("first statement")
+                session['authentication_attempts'] += 1
+                if session.get('authentication_attempts') >= 3:
+                    flash(Markup('Number of incorrect login attempts exceeded. '
+                                 'Please click <a href="/reset">here</a> to reset.'))
+                    return render_template('users/login.html')
+                attempts_remaining = 3 - session.get('authentication_attempts')
+                print(attempts_remaining)
+                flash("Please check your login details and try again, "
+                      "{attempts} login attempts remaining".format(attempts=attempts_remaining))
+                return render_template("users/login.html", form=form)
+            else:
+                login_user(user)
+                db.session.commit()
+                session['authentication_attempts'] = 0
+                if current_user.role == 'admin':
+                    return redirect(url_for("admin.admin"))
+                else:
+                    return redirect(url_for('lottery.lottery'))
+
+        return render_template("users/login.html", form=form)
+    else:
+        flash("You are already logged in.")
+        return render_template('main/index.html')
 
 
 # view user account
 @users_blueprint.route('/account')
+@login_required
 def account():
     return render_template('users/account.html',
                            acc_no="PLACEHOLDER FOR USER ID",
@@ -66,11 +105,21 @@ def account():
 @users_blueprint.route("/setup_2fa")
 def setup_2fa():
     if 'email' not in session:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('403'))
     user = User.query.filter_by(email=session['email']).first()
     if not user:
         del session['email']
-        return redirect(url_for('main.index'))
+        return redirect(url_for('index'))
 
     return render_template('users/setup_2fa.html', username=user.email, uri=user.get_2fa_uri()), 200, \
            {'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0'}
+
+
+@users_blueprint.route("/logout")
+@login_required
+def logout():
+    session['authentication_attempts'] = 0
+    # logging.warning('SECURITY - Log out [%s %s %s %s]', current_user.id, current_user.username, current_user.role,
+    #                 request.remote_addr)
+    logout_user()
+    return redirect(url_for("index"))

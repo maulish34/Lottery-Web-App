@@ -60,6 +60,7 @@
             {% endif %}
         </div>
     </div>
+
     <div class="column is-4 is-offset-4">
         <h4 class="title is-4">Playable Draws</h4>
         <div class="box">
@@ -80,6 +81,7 @@
             </form>
         </div>
     </div>
+
     <div class="column is-6 is-offset-3">
         <h4 class="title is-4">Play Lottery</h4>
         <div class="box">
@@ -110,21 +112,23 @@
                 </div>
             {% endif %}
 
+
             {# render check result button if current lottery round not played #}
-            {% if not played %}
-                <form method="POST" action="/check_draws">
-                    <div>
-                        <button class="button is-info is-centered">Check Result</button>
-                    </div>
-                </form>
-            {% else %}
-                {# render play again button if current lottery round has been played #}
-                <form method="POST" action="/play_again">
-                    <div>
-                        <button class="button is-info is-centered">Play Again</button>
-                    </div>
-                </form>
-            {% endif %}
+
+                {% if not played %}
+                    <form method="POST" action="/check_draws">
+                        <div>
+                            <button class="button is-info is-centered">Check Result</button>
+                        </div>
+                    </form>
+                {% else %}
+                    {# render play again button if current lottery round has been played #}
+                    <form method="POST" action="/play_again">
+                        <div>
+                            <button class="button is-info is-centered">Play Again</button>
+                        </div>
+                    </form>
+                {% endif %}
         </div>
     </div>
 
