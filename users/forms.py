@@ -9,11 +9,11 @@ from wtforms.validators import DataRequired, Email, ValidationError, Length, Equ
 
 def character_check(form, field):
     exclude_chars = "*?!'^+%&/()=}[]{$#@<>"
-    print('character check')
+    print("character check")
     for char in field.data:
         if char in exclude_chars:
             raise ValidationError(f"Character {char} is not allowed.")
-    print('character check')
+    print("character check")
 
 
 def phone_check(form, field):
@@ -25,13 +25,14 @@ def phone_check(form, field):
 
 
 def validate_password(form, field):
-    p = re.compile(r"(?=.*\d)(?=.*[a-z])(?=.*[A-Z])")
+    p = re.compile(r"(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])")
     print(field.data)
     if not p.match(field.data):
         raise ValidationError(
             "Password must contain 1 digit, 1 lowercase letter and 1 uppercase letter."
         )
-    print("apss check")
+    print("pass check")
+
 
 def validate_dates(form, field):
     p = re.compile(r"^([012][0-9]|3[01])/(0[1-9]|1[0-2])/(19|20)[0-9]{2}$")
@@ -40,22 +41,47 @@ def validate_dates(form, field):
 
 
 def validate_postcode(form, field):
-    p = re.compile(r"^([A-Z][0-9]) ([0-9][A-Z]{2})|([A-Z][0-9]{2}) ([0-9][A-Z]{2})|([A-Z]{2}[0-9]) ([0-9][A-Z]{2})$")
+    p = re.compile(
+        r"^([A-Z][0-9]) ([0-9][A-Z]{2})|([A-Z][0-9]{2}) ([0-9][A-Z]{2})|([A-Z]{2}[0-9]) ([0-9][A-Z]{2})$"
+    )
     if not p.match(field.data):
-        raise ValidationError("The postcode must be in one of the following formats: XY YXX or XYY YXX or XXY YXX,"
-                              " where X is any uppercase letter and Y is any digit")
-
+        raise ValidationError(
+            "The postcode must be in one of the following formats: XY YXX or XYY YXX or XXY YXX,"
+            " where X is any uppercase letter and Y is any digit"
+        )
 
 
 class RegisterForm(FlaskForm):
     email = StringField(
         validators=[DataRequired(message="Please fill in this field."), Email()]
     )
-    firstname = StringField(validators=[DataRequired(message="Please fill in this field."), character_check,])
-    lastname = StringField(validators=[DataRequired(message="Please fill in this field."), character_check,])
-    birthdate = StringField(validators=[DataRequired(message="Please fill in this field."), validate_dates])
-    phone = StringField(validators=[DataRequired(message="Please fill in this field."), phone_check,])
-    postcode = StringField(validators=[DataRequired(message="Please fill in this field."), validate_postcode])
+    firstname = StringField(
+        validators=[
+            DataRequired(message="Please fill in this field."),
+            character_check,
+        ]
+    )
+    lastname = StringField(
+        validators=[
+            DataRequired(message="Please fill in this field."),
+            character_check,
+        ]
+    )
+    birthdate = StringField(
+        validators=[DataRequired(message="Please fill in this field."), validate_dates]
+    )
+    phone = StringField(
+        validators=[
+            DataRequired(message="Please fill in this field."),
+            phone_check,
+        ]
+    )
+    postcode = StringField(
+        validators=[
+            DataRequired(message="Please fill in this field."),
+            validate_postcode,
+        ]
+    )
     password = PasswordField(
         validators=[
             DataRequired(message="Please fill in this field."),

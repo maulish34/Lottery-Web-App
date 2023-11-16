@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    
+    <h1 class="title is-1">Status 403: Forbidden Access Error</h1>
+
+    <div>
+        <p>
+            The client does not have access rights to the content; that is, it is unauthorized,
+            so the server is refusing to give the requested resource. Unlike 401 Unauthorized,
+            the client's identity is known to the server.
+        </p>
+    </div>
+    <div>
+    <br><br>
+        <a HREF="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403">You can find more information about this
+        by clicking here.</a>
+    </div>
+
+{% endblock %}
