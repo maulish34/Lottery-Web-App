@@ -1,11 +1,31 @@
 # IMPORTS
 from functools import wraps
 
-from flask import Flask, render_template
-
+from flask import Flask, render_template, request
 from flask_qrcode import QRcode
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import login_user, logout_user, current_user, login_required, login_manager, LoginManager
+import logging
+import os
+
+
+class SecurityFilter(logging.Filter):
+    def filter(self, record):
+        return 'SECURITY' in record.getMessage()
+
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+file_handler = logging.FileHandler(os.path.join(os.path.dirname(__file__), 'lottery.log'), 'a')
+file_handler.setLevel(logging.WARNING)
+file_handler.addFilter(SecurityFilter())
+
+formatter = logging.Formatter('%(asctime)s : %(message)s', '%m/%d/%Y %I:%M:%S %p')
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+
 
 # CONFIG
 app = Flask(__name__)
@@ -26,8 +46,8 @@ def required_roles(*roles):
         @wraps(f)
         def wrapped(*args, **kwargs):
             if current_user.role not in roles:
-                # logging.warning('SECURITY - Unauthorised access [%s %s %s %s]', current_user.id, current_user.username,
-                #                 current_user.role, request.remote_addr)
+                logging.warning('SECURITY - Unauthorised access [%s %s %s %s]', current_user.id, current_user.email,
+                                current_user.role, request.remote_addr)
                 return render_template('403.html')
             return f(*args, **kwargs)
         return wrapped

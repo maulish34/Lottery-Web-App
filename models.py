@@ -1,4 +1,7 @@
+from datetime import datetime
+
 import pyotp
+from flask import request
 
 from app import db, app
 from flask_login import UserMixin
@@ -21,11 +24,17 @@ class User(db.Model, UserMixin):
     role = db.Column(db.String(100), nullable=False, default='user')
     birthdate = db.Column(db.String(100), nullable=False)
     postcode = db.Column(db.String(100), nullable=False)
+    registered_on = db.Column(db.DateTime(), nullable=False)
+    current_login = db.Column(db.DateTime(), nullable=True)
+    last_login = db.Column(db.DateTime(), nullable=True)
+    current_ip = db.Column(db.String(100), nullable=True)
+    last_ip = db.Column(db.String(100), nullable=True)
+    total_logins = db.Column(db.String(100), nullable=False, default="0")
 
     # Define the relationship to Draw
     draws = db.relationship('Draw')
 
-    def __init__(self, email, firstname, lastname, birthdate, phone, postcode, password, role):
+    def __init__(self, email, firstname, lastname, birthdate, phone, postcode, password, total_logins, role):
         self.email = email
         self.firstname = firstname
         self.lastname = lastname
@@ -33,6 +42,12 @@ class User(db.Model, UserMixin):
         self.phone = phone
         self.postcode = postcode
         self.password = password
+        self.registered_on = datetime.now()
+        self.current_login = None
+        self.last_login = None
+        self.current_ip = None
+        self.last_ip = None
+        self.total_logins = total_logins
         self.role = role
 
     def get_2fa_uri(self):
@@ -91,6 +106,7 @@ def init_db():
                      birthdate="11/11/2000",
                      phone='0191-123-4567',
                      postcode="NE1 4SP",
+                     total_logins="0",
                      role='admin')
 
         db.session.add(admin)

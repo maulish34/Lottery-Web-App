@@ -123,13 +123,57 @@
         </form>
         </div>
     </div>
-<div class="column is-10 is-offset-1">
-    <form action="/registerAdmin">
-            <div>
-                <button class="button is-info is-centered">Register new admin</button>
+
+    <div class="column is-10 is-offset-1" id="test">
+        <h4 class="title is-4">Register new admin</h4>
+        <div class="box">
+            <form action="/registerAdmin">
+                <div>
+                    <button class="button is-info is-centered">Register</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="column is-10 is-offset-1" id="test">
+        <h4 class="title is-4">User Activity Logs</h4>
+        <div class="box">
+            {% if content %}
+                <div class="field">
+                <table class="table">
+                    <tr>
+                        <th>ID</th>
+                        <th>Email</th>
+                        <th>Registration time</th>
+                        <th>Current login</th>
+                        <th>Last login</th>
+                        <th>Current IP</th>
+                        <th>Last IP</th>
+                        <th>Successful logins</th>
+
+                    </tr>
+                    {% for user in content %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.registered_on }}</td>
+                            <td>{{ user.current_login }}</td>
+                            <td>{{ user.last_login }}</td>
+                            <td>{{ user.current_ip }}</td>
+                            <td>{{ user.last_ip }}</td>
+                            <td>{{ user.total_logins }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+            <form method="POST" action="/view_user_activity">
+                <div>
+                    <button class="button is-info is-centered">View User Activity</button>
+                </div>
+            </form>
             </div>
-        </form>
-</div>
+        </div>
+    </div>
 
 
 {% endblock %}

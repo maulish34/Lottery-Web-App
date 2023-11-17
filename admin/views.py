@@ -167,7 +167,6 @@ from users.forms import RegisterForm
 @required_roles("admin")
 @login_required
 def registerAdmin():
-
     form = RegisterForm()
 
     if form.validate_on_submit():
@@ -191,3 +190,12 @@ def registerAdmin():
         flash("New admin has been successfully added to the application.")
         return redirect(url_for('admin.admin'))
     return render_template("users/register.html", form=form)
+
+
+@admin_blueprint.route('/view_user_activity', methods=['POST'])
+@login_required
+@required_roles('admin')
+def view_user_activity():
+    content = User.query.filter_by(role="user").all()
+    print(content)
+    return render_template('admin/admin.html', name=current_user.firstname, content=content)

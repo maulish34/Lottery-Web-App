@@ -1,5 +1,8 @@
 # IMPORTS
-from flask import Blueprint, render_template, flash, redirect, url_for, session
+import logging
+from datetime import datetime
+
+from flask import Blueprint, render_template, flash, redirect, url_for, session, request
 from markupsafe import Markup
 from flask_login import login_user, logout_user, current_user, login_required, login_manager
 from app import db, required_roles
@@ -35,12 +38,14 @@ def register():
                         phone=form.phone.data,
                         postcode=form.postcode.data,
                         password=form.password.data,
+                        total_logins="0",
                         role='user')
 
         # add the new user to the database
         db.session.add(new_user)
         db.session.commit()
         session["email"] = new_user.email
+        logging.warning('SECURITY - User registration [%s %s]', form.email.data, request.remote_addr)
 
         # sends user to 2fa setup page
         return redirect(url_for("users.setup_2fa"))
@@ -64,7 +69,7 @@ def login():
             print(user.email)
             if not user or not user.verify_password(form.password.data) or not user.verify_pin(form.pin.data) \
                     or not user.verify_postcode(form.postcode.data):
-                print("first statement")
+                logging.warning('SECURITY - Invalid log in [%s %s %s %s]', form.email.data, request.remote_addr)
                 session['authentication_attempts'] += 1
                 if session.get('authentication_attempts') >= 3:
                     flash(Markup('Number of incorrect login attempts exceeded. '
@@ -77,7 +82,15 @@ def login():
                 return render_template("users/login.html", form=form)
             else:
                 login_user(user)
+
+                current_user.last_login = current_user.current_login
+                current_user.last_ip = current_user.current_ip
+                current_user.current_login = datetime.now()
+                current_user.current_ip = request.remote_addr
+                current_user.total_logins = str(int(current_user.total_logins) + 1)
                 db.session.commit()
+                logging.warning('SECURITY - Log in [%s %s %s %s]', current_user.id,
+                                current_user.email, current_user.role, request.remote_addr)
                 session['authentication_attempts'] = 0
                 if current_user.role == 'admin':
                     return redirect(url_for("admin.admin"))
@@ -95,11 +108,13 @@ def login():
 @login_required
 def account():
     return render_template('users/account.html',
-                           acc_no="PLACEHOLDER FOR USER ID",
-                           email="PLACEHOLDER FOR USER EMAIL",
-                           firstname="PLACEHOLDER FOR USER FIRSTNAME",
-                           lastname="PLACEHOLDER FOR USER LASTNAME",
-                           phone="PLACEHOLDER FOR USER PHONE")
+                           acc_no=current_user.id,
+                           email=current_user.email,
+                           firstname=current_user.firstname,
+                           lastname=current_user.lastname,
+                           phone=current_user.phone,
+                           birthdate=current_user.birthdate,
+                           postcode=current_user.postcode)
 
 
 @users_blueprint.route("/setup_2fa")
@@ -119,8 +134,8 @@ def setup_2fa():
 @login_required
 def logout():
     session['authentication_attempts'] = 0
-    # logging.warning('SECURITY - Log out [%s %s %s %s]', current_user.id, current_user.username, current_user.role,
-    #                 request.remote_addr)
+    logging.warning('SECURITY - Log out [%s %s %s %s]', current_user.id, current_user.email, current_user.role,
+                    request.remote_addr)
     logout_user()
     return redirect(url_for("index"))
 
@@ -141,8 +156,8 @@ def update_password():
             current_user.password = form.new_password.data
             db.session.commit()
             flash('Password changed successfully')
-            # logging.warning('SECURITY - Update password [%s %s %s %s]', current_user.id,
-            #                 current_user.username, current_user.role, request.remote_addr)
+            logging.warning('SECURITY - Update password [%s %s %s %s]', current_user.id,
+                            current_user.email, current_user.role, request.remote_addr)
             return redirect(url_for('users.account'))
 
     return render_template('users/update_password.html', form=form)
