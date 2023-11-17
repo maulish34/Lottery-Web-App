@@ -4,7 +4,7 @@ from markupsafe import Markup
 from flask_login import login_user, logout_user, current_user, login_required, login_manager
 from app import db, required_roles
 from models import User
-from users.forms import RegisterForm, LoginForm
+from users.forms import RegisterForm, LoginForm, PasswordForm
 
 # CONFIG
 users_blueprint = Blueprint('users', __name__, template_folder='templates')
@@ -123,3 +123,26 @@ def logout():
     #                 request.remote_addr)
     logout_user()
     return redirect(url_for("index"))
+
+
+@users_blueprint.route('/update_password', methods=['GET', 'POST'])
+@login_required
+def update_password():
+    form = PasswordForm()
+
+    if form.validate_on_submit():
+        if not current_user.password == form.current_password.data:
+            flash("Incorrect current password. Please try again.")
+            return redirect(url_for('users.update_password'))
+        if current_user.password == form.new_password.data:
+            flash("The current password and new password can not be the same. Please try again.")
+            return redirect(url_for('users.update_password'))
+        else:
+            current_user.password = form.new_password.data
+            db.session.commit()
+            flash('Password changed successfully')
+            # logging.warning('SECURITY - Update password [%s %s %s %s]', current_user.id,
+            #                 current_user.username, current_user.role, request.remote_addr)
+            return redirect(url_for('users.account'))
+
+    return render_template('users/update_password.html', form=form)
