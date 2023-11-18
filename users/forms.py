@@ -85,7 +85,9 @@ class RegisterForm(FlaskForm):
     password = PasswordField(
         validators=[
             DataRequired(message="Please fill in this field."),
-            Length(min=6, max=12, message="Must be between 8 and 15 characters in length"),
+            Length(
+                min=6, max=12, message="Must be between 8 and 15 characters in length"
+            ),
             validate_password,
         ]
     )
@@ -126,4 +128,3 @@ class PasswordForm(FlaskForm):
         ]
     )
     submit = SubmitField("Change Password")
-

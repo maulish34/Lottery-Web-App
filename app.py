@@ -29,12 +29,14 @@ logger.addHandler(file_handler)
 
 # CONFIG
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "LongAndRandomSecretKey"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///lottery.db"
-app.config["SQLALCHEMY_ECHO"] = True
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["RECAPTCHA_PUBLIC_KEY"] = "6Lcy7H4oAAAAADq1ByblWD9nbqIUZKozQmGFEmtO"
-app.config["RECAPTCHA_PRIVATE_KEY"] = "6Lcy7H4oAAAAAF3BOKBCJZqaItEw4aq7LsWAtnN3"
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
+app.config["SQLALCHEMY_ECHO"] = os.getenv("SQLALCHEMY_ECHO") == "True"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = (
+        os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS") == "True"
+)
+app.config["RECAPTCHA_PUBLIC_KEY"] = os.getenv("RECAPTCHA_PUBLIC_KEY")
+app.config["RECAPTCHA_PRIVATE_KEY"] = os.getenv("RECAPTCHA_PRIVATE_KEY")
 
 # initialise database
 db = SQLAlchemy(app)

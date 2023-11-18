@@ -51,8 +51,13 @@ class DrawForm(FlaskForm):
     def validate(self, **kwargs):
         standard_validators = FlaskForm.validate(self)
         if standard_validators:
-
-            numbers = [self.number1.data, self.number2.data, self.number3.data, self.number5.data, self.number6.data]
+            numbers = [
+                self.number1.data,
+                self.number2.data,
+                self.number3.data,
+                self.number5.data,
+                self.number6.data,
+            ]
             unique = []
             for number in numbers:
                 if number not in unique:
@@ -60,7 +65,3 @@ class DrawForm(FlaskForm):
                 else:
                     return False
             return True
-
-
-
-
