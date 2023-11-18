@@ -69,7 +69,7 @@ def login():
             print(user.email)
             if not user or not user.verify_password(form.password.data) or not user.verify_pin(form.pin.data) \
                     or not user.verify_postcode(form.postcode.data):
-                logging.warning('SECURITY - Invalid log in [%s %s %s %s]', form.email.data, request.remote_addr)
+                logging.warning('SECURITY - Invalid log in [%s %s]', form.email.data, request.remote_addr)
                 session['authentication_attempts'] += 1
                 if session.get('authentication_attempts') >= 3:
                     flash(Markup('Number of incorrect login attempts exceeded. '

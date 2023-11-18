@@ -1,10 +1,12 @@
 from datetime import datetime
-
+import rsa
 import pyotp
 from flask import request
-
+import bcrypt
 from app import db, app
-from flask_login import UserMixin
+from flask_login import UserMixin, current_user
+from cryptography.fernet import Fernet
+import pickle
 
 
 class User(db.Model, UserMixin):
@@ -30,6 +32,12 @@ class User(db.Model, UserMixin):
     current_ip = db.Column(db.String(100), nullable=True)
     last_ip = db.Column(db.String(100), nullable=True)
     total_logins = db.Column(db.String(100), nullable=False, default="0")
+    draw_key = db.Column(db.BLOB, nullable=False, default=Fernet.generate_key())
+
+    # generate keys for asymmetric encryption
+    publicKey, privateKey = rsa.newkeys(512)
+    private_key = db.Column(db.BLOB, nullable=False, default=pickle.dumps(privateKey))
+    public_key = db.Column(db.BLOB, nullable=False, default=pickle.dumps(publicKey))
 
     # Define the relationship to Draw
     draws = db.relationship('Draw')
@@ -41,7 +49,7 @@ class User(db.Model, UserMixin):
         self.birthdate = birthdate
         self.phone = phone
         self.postcode = postcode
-        self.password = password
+        self.password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         self.registered_on = datetime.now()
         self.current_login = None
         self.last_login = None
@@ -54,7 +62,7 @@ class User(db.Model, UserMixin):
         return str(pyotp.totp.TOTP(self.pin_key).provisioning_uri(name=self.email, issuer_name='CSC2031 Lottery App'))
 
     def verify_password(self, password):
-        return self.password == password
+        return bcrypt.checkpw(password.encode('utf-8'), self.password)
 
     def verify_pin(self, pin):
         return pyotp.TOTP(self.pin_key).verify(pin)
@@ -86,13 +94,32 @@ class Draw(db.Model):
     # Lottery round that draw is used
     lottery_round = db.Column(db.Integer, nullable=False, default=0)
 
-    def __init__(self, user_id, numbers, master_draw, lottery_round):
+    def __init__(self, user_id, numbers, master_draw, lottery_round, draw_key):
         self.user_id = user_id
-        self.numbers = numbers
+
+        # While using symmetric encryption
+        # self.numbers = encrypt(numbers, draw_key)
+
+        # While using asymmetric encryption
+        self.numbers = rsa.encrypt(numbers.encode('utf-8'), pickle.loads(current_user.public_key))
+
         self.been_played = False
         self.matches_master = False
         self.master_draw = master_draw
         self.lottery_round = lottery_round
+
+    def view_draw(self, private_key):
+        private_key = pickle.loads(private_key)
+        return rsa.decrypt(self.numbers, private_key).decode('utf-8')
+
+
+
+def encrypt(data, draw_key):
+    return Fernet(draw_key).encrypt(bytes(data, 'utf-8'))
+
+
+def decrypt(data, draw_key):
+    return Fernet(draw_key).decrypt(data).decode('utf-8')
 
 
 def init_db():

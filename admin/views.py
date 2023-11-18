@@ -1,10 +1,12 @@
 # IMPORTS
+import pickle
 import random
 from flask import Blueprint, render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
-
+from sqlalchemy.orm import make_transient
+import rsa
 from app import db, required_roles
-from models import User, Draw
+from models import User, Draw, decrypt
 
 # CONFIG
 admin_blueprint = Blueprint('admin', __name__, template_folder='templates')
@@ -47,7 +49,7 @@ def generate_winning_draw():
 
     # create a new draw object.
     new_winning_draw = Draw(user_id=current_user.id, numbers=winning_numbers_string, master_draw=True,
-                            lottery_round=lottery_round)
+                            lottery_round=lottery_round, draw_key=current_user.draw_key)
 
     # add the new winning draw to the database
     db.session.add(new_winning_draw)
@@ -66,8 +68,18 @@ def view_winning_draw():
     # get winning draw from DB
     current_winning_draw = Draw.query.filter_by(master_draw=True, been_played=False).first()
 
+
     # if a winning draw exists
     if current_winning_draw:
+
+        # decrypting winning draw numbers to display using symmetric encryption
+        # make_transient(current_winning_draw)
+        # current_winning_draw = decrypt(current_winning_draw.numbers, current_user.draw_key)
+
+        #  Decrypting winning draw numbers to display using asymmetric encryption
+        make_transient(current_winning_draw)
+        current_winning_draw.numbers = current_winning_draw.view_draw(current_user.private_key)
+
         # re-render admin page with current winning draw and lottery round
         return render_template('admin/admin.html', winning_draw=current_winning_draw, name=current_user.firstname)
 
@@ -84,8 +96,16 @@ def run_lottery():
     # get current unplayed winning draw
     current_winning_draw = Draw.query.filter_by(master_draw=True, been_played=False).first()
 
+
+
     # if current unplayed winning draw exists
     if current_winning_draw:
+
+        # Decrypting the winning draw numbers using symmetric encryption
+        # current_winning_draw.numbers = decrypt(current_winning_draw.numbers, current_user.draw_key)
+
+        # Decrypting the winning draw numbers using asymmetric encryption
+        current_winning_draw.numbers = current_winning_draw.view_draw(current_user.private_key)
 
         # get all unplayed user draws
         user_draws = Draw.query.filter_by(master_draw=False, been_played=False).all()
@@ -104,6 +124,12 @@ def run_lottery():
 
                 # get the owning user (instance/object)
                 user = User.query.filter_by(id=draw.user_id).first()
+
+                # Decrypting the user's draw numbers using symmetric encryption
+                # draw.numbers = decrypt(draw.numbers, user.draw_key)
+
+                # Decrypting the user's draw numbers using asymmetric encryption
+                draw.numbers = draw.view_draw(user.private_key)
 
                 # if user draw matches current unplayed winning draw
                 if draw.numbers == current_winning_draw.numbers:

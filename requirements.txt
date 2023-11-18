@@ -28,3 +28,4 @@ flask-qrcode
 cryptography~=41.0.5
 SQLAlchemy~=2.0.21
 bcrypt
+rsa
