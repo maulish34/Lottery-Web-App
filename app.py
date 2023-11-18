@@ -1,6 +1,6 @@
 # IMPORTS
 from functools import wraps
-
+from flask_talisman import Talisman
 from flask import Flask, render_template, request
 from flask_qrcode import QRcode
 from flask_sqlalchemy import SQLAlchemy
@@ -26,7 +26,6 @@ file_handler.setFormatter(formatter)
 
 logger.addHandler(file_handler)
 
-
 # CONFIG
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
@@ -38,9 +37,22 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = (
 app.config["RECAPTCHA_PUBLIC_KEY"] = os.getenv("RECAPTCHA_PUBLIC_KEY")
 app.config["RECAPTCHA_PRIVATE_KEY"] = os.getenv("RECAPTCHA_PRIVATE_KEY")
 
+csp = {
+    'default-src': ['\'self\'', 'https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css'],
+    'frame-src': ['\'self\'',
+                  'https://www.google.com/recaptcha/',
+                  'https://recaptcha.google.com/recaptcha/'],
+    'script-src': ['\'self\'',
+                   '\'unsafe-inline\'',
+                   'https://www.google.com/recaptcha/',
+                   'https://www.gstatic.com/recaptcha/'],
+    'img-src': ['data:']
+}
+
 # initialise database
 db = SQLAlchemy(app)
 qrcode = QRcode(app)
+talisman = Talisman(app, content_security_policy=csp)
 
 
 def required_roles(*roles):
@@ -52,8 +64,11 @@ def required_roles(*roles):
                                 current_user.role, request.remote_addr)
                 return render_template('403.html')
             return f(*args, **kwargs)
+
         return wrapped
+
     return wrapper
+
 
 # HOME PAGE VIEW
 @app.route("/")
@@ -76,7 +91,6 @@ app.register_blueprint(lottery_blueprint)
 login_manager = LoginManager()
 login_manager.login_view = "users.login"
 login_manager.init_app(app)
-
 
 from models import User
 
@@ -112,4 +126,4 @@ def internal_error(error):
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(ssl_context=('/bin/cert.pem', '/bin/key.pem'))

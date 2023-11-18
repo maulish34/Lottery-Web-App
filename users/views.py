@@ -36,10 +36,11 @@ def register():
             flash("Email address already exists")
             return render_template("users/register.html", form=form)
 
-        if current_user.role == "admin":
-            role = "admin"
-        else:
-            role = "user"
+        role = "user"
+
+        if not current_user.is_anonymous:
+            if current_user.role == "admin":
+                role = "admin"
 
         # create a new user with the form data
         new_user = User(
@@ -57,7 +58,7 @@ def register():
         # add the new user to the database
         db.session.add(new_user)
         db.session.commit()
-        if current_user.role != "admin":
+        if role != "admin":
             session["email"] = new_user.email
             logging.warning(
                 "SECURITY - User registration [%s %s]",
@@ -89,10 +90,10 @@ def login():
             user = User.query.filter_by(email=form.email.data).first()
             print(user.email)
             if (
-                not user
-                or not user.verify_password(form.password.data)
-                or not user.verify_pin(form.pin.data)
-                or not user.verify_postcode(form.postcode.data)
+                    not user
+                    or not user.verify_password(form.password.data)
+                    or not user.verify_pin(form.pin.data)
+                    or not user.verify_postcode(form.postcode.data)
             ):
                 logging.warning(
                     "SECURITY - Invalid log in [%s %s]",
