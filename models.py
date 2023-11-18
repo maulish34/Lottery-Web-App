@@ -113,7 +113,6 @@ class Draw(db.Model):
         return rsa.decrypt(self.numbers, private_key).decode('utf-8')
 
 
-
 def encrypt(data, draw_key):
     return Fernet(draw_key).encrypt(bytes(data, 'utf-8'))
 

@@ -30,14 +30,23 @@ def create_draw():
     form = DrawForm()
 
     if form.validate_on_submit():
-        submitted_numbers = (str(form.number1.data) + ' '
-                             + str(form.number2.data) + ' '
-                             + str(form.number3.data) + ' '
-                             + str(form.number4.data) + ' '
-                             + str(form.number5.data) + ' '
-                             + str(form.number6.data))
+
+        numbers = [form.number1.data, form.number2.data, form.number3.data, form.number4.data, form.number5.data,
+                   form.number6.data]
+
+        sortedNumbers = sorted(numbers)
+
+        submitted_numbers = (str(sortedNumbers[0]) + ' '
+                             + str(sortedNumbers[1]) + ' '
+                             + str(sortedNumbers[2]) + ' '
+                             + str(sortedNumbers[3]) + ' '
+                             + str(sortedNumbers[4]) + ' '
+                             + str(sortedNumbers[5]))
+
+
         # create a new draw with the form data.
-        new_draw = Draw(user_id=current_user.id, numbers=submitted_numbers, master_draw=False, lottery_round=0, draw_key=current_user.draw_key)
+        new_draw = Draw(user_id=current_user.id, numbers=submitted_numbers, master_draw=False, lottery_round=0,
+                        draw_key=current_user.draw_key)
         # add the new draw to the database
         db.session.add(new_draw)
         db.session.commit()
@@ -46,6 +55,7 @@ def create_draw():
         flash('Draw %s submitted.' % submitted_numbers)
         return redirect(url_for('lottery.lottery'))
 
+    flash("Each number should be unique")
     return render_template('lottery/lottery.html', name="PLACEHOLDER FOR FIRSTNAME", form=form)
 
 
