@@ -32,7 +32,7 @@ cd lottery-web-app
 
 ### 2. Set Up Environment Variables
 
-Create a `.env` file in the project root with the following variables (these will **not** be present in the repository):
+Update the `.env` file in the project root with the following variables:
 
 ```
 SECRET_KEY = <your-secret-key>
